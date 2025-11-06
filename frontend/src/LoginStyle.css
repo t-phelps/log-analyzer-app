@@ -1,0 +1,51 @@
+.login-body {
+  font-family: "Times New Roman", Times, serif;
+  background: linear-gradient(purple, aqua);
+  height: 100vh;
+  display: flex;
+  flex-direction: column; /* stacks divs vertically */
+  justify-content: center; /* center vertically */
+  align-items: center; /* center horizontally */
+}
+
+.header {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 50px;
+  border-bottom: dotted;
+}
+
+.login-container {
+  border: solid;
+  padding: 8px;
+  border-radius: 5px;
+  background: linear-gradient(aqua, purple);
+  width: 250px;
+}
+
+input {
+  background-color: whitesmoke;
+  border-radius: 5px;
+}
+
+.link {
+  color: blue;
+}
+
+.link:hover {
+  color: red;
+}
+
+.btn {
+  text-align: center;
+  border-radius: 8px;
+}
+
+.btn:hover {
+  background-color: grey;
+}
+
+.error-msg {
+  color: red;
+  font-style: italic;
+}

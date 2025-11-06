@@ -1,24 +1,37 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import { LoginForm } from "./components/LoginForm";
+import { CreateAccountForm } from "./components/CreateAccountForm";
+import { LandingPage } from "./components/LandingPage";
+import { useState } from "react";
+import { NavBar } from "./components/NavBar";
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        {/* <Route path="/" element={<LoginForm setIsLoggedIn={setIsLoggedIn} />} />
+        <Route
+          path="/create-account"
+          element={<CreateAccountForm setIsLoggedIn={setIsLoggedIn} />}
+        />
+        <Route
+          path="/landing"
+          element={isLoggedIn ? <LandingPage /> : <Navigate to="/" />}
+        /> */}
+        {/* 
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/create-account" element={<CreateAccountForm />} /> */}
+        <Route path="/" element={<LandingPage />} />
+      </Routes>
+    </Router>
   );
 }
 

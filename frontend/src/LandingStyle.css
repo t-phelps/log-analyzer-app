@@ -1,0 +1,44 @@
+.btn {
+  text-align: center;
+  border-radius: 8px;
+}
+
+.landing-body {
+  font-family: "Times New Roman", Times, serif;
+  background: linear-gradient(purple, aqua);
+}
+
+.page-content {
+  justify-content: center;
+  text-align: center;
+  height: 100vh;
+  display: flex;
+  flex-direction: column; /* stacks divs vertically */
+  justify-content: center; /* center vertically */
+  align-items: center; /* center horizontally */
+}
+
+.description {
+  margin-bottom: 50px;
+}
+
+.description h2 {
+  border-bottom: dotted;
+}
+
+.description p {
+  font-style: italic;
+}
+
+.parameters {
+  margin: 0px;
+}
+
+.box1 {
+  
+}
+.box2 {
+}
+
+.box3 {
+}
