@@ -1,15 +1,19 @@
 import "../NavBar.css";
-
+import { House, User } from "lucide-react";
 export const NavBar = () => {
   return (
     <nav className="nav">
       <h2>Log Analyzer</h2>
       <ul>
-        <li className="active">
-          <a href="/landing">Home</a>
+        <li>
+          <a href="/landing">
+            <House />
+          </a>
         </li>
         <li>
-          <a href="/account">Account</a>
+          <a href="/account">
+            <User />
+          </a>
         </li>
       </ul>
     </nav>
