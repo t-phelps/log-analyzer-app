@@ -17,7 +17,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* <Route path="/" element={<LoginForm setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/" element={<LoginForm setIsLoggedIn={setIsLoggedIn} />} />
         <Route
           path="/create-account"
           element={<CreateAccountForm setIsLoggedIn={setIsLoggedIn} />}
@@ -25,11 +25,11 @@ function App() {
         <Route
           path="/landing"
           element={isLoggedIn ? <LandingPage /> : <Navigate to="/" />}
-        /> */}
+        />
         {/* 
         <Route path="/" element={<LoginForm />} />
-        <Route path="/create-account" element={<CreateAccountForm />} /> */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/create-account" element={<CreateAccountForm />} />
+        {/* <Route path="/" element={<LandingPage />} /> */}
       </Routes>
     </Router>
   );
