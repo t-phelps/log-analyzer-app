@@ -13,4 +13,8 @@ public class AuthenticationRepository {
     public Optional<User> getUser(User user) {
         return Optional.ofNullable(user);
     }
+
+    public void createUser(User user){
+
+    }
 }
