@@ -1,4 +1,4 @@
-package dto;
+package com.loganalyzer.backend.dto;
 
 public class User {
 

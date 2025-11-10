@@ -1,6 +1,6 @@
-package repository;
+package com.loganalyzer.backend.repository;
 
-import dto.User;
+import com.loganalyzer.backend.dto.User;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,8 +10,8 @@ public class AuthenticationRepository {
 
 
 
-    public Optional<User> getUser(User user) {
-        return Optional.ofNullable(user);
+    public Optional<User> getUser(String username) {
+        return Optional.empty();
     }
 
     public void createUser(User user){

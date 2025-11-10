@@ -1,20 +1,17 @@
-package controller;
+package com.loganalyzer.backend.controller;
 
-import dto.LoginRequest;
-import dto.CreatAccountRequest;
-
+import com.loganalyzer.backend.dto.CreatAccountRequest;
+import com.loganalyzer.backend.dto.LoginRequest;
+import com.loganalyzer.backend.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-import service.AuthenticationService;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
-@RestController("/auth")
+@RestController
+@RequestMapping("/auth")
+@CrossOrigin("http://localhost:3000")
 public class AuthenticationController {
 
     AuthenticationService authenticationService;
@@ -51,7 +48,8 @@ public class AuthenticationController {
         }
 
         try{
-            ResponseCookie cookie =
+            ResponseCookie cookie = authenticationService.createUser(request);
+            return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body("Account created successfully");
         }catch(Exception e){
             return ResponseEntity.badRequest().body("Failed To Create Account");
         }

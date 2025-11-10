@@ -1,15 +1,14 @@
-package service;
+package com.loganalyzer.backend.service;
 
-import dto.LoginRequest;
-import dto.User;
-import dto.CreatAccountRequest;
-
+import com.loganalyzer.backend.dto.CreatAccountRequest;
+import com.loganalyzer.backend.dto.LoginRequest;
+import com.loganalyzer.backend.dto.User;
+import com.loganalyzer.backend.jwt.JwtTokenGenerator;
+import com.loganalyzer.backend.repository.AuthenticationRepository;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
-import repository.AuthenticationRepository;
-import jwt.JwtTokenGenerator;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Optional;
 
@@ -20,7 +19,7 @@ public class AuthenticationService {
     private final JwtTokenGenerator jwtTokenGenerator;
 
     @Autowired
-    public AuthenticationService(AuthenticationRepository authenticationRepository,  JwtTokenGenerator jwtTokenGenerator) {
+    public AuthenticationService(AuthenticationRepository authenticationRepository, JwtTokenGenerator jwtTokenGenerator) {
         this.authenticationRepository = authenticationRepository;
         this.jwtTokenGenerator = jwtTokenGenerator;
     }
@@ -33,15 +32,14 @@ public class AuthenticationService {
         String username = loginRequest.username();
         String password = loginRequest.password();
 
-        // hash password
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String hashedPassword = passwordEncoder.encode(password);
-
         // get the user stored in the db
-        Optional<User> user = authenticationRepository.getUser(new User(username, hashedPassword, null));
+        Optional<User> user = authenticationRepository.getUser(username);
 
-        if(user.isPresent()){
-            if(passwordEncoder.matches(hashedPassword, user.get().getPassword())){
+        if (user.isPresent()) {
+            String storedHashedPassword = user.get().getPassword();
+
+            // verify the raw password against the stored hash
+            if (BCrypt.checkpw(password, storedHashedPassword)) {
                 String jws = jwtTokenGenerator.getJwt(username);
 
                 // return a response cookie to be stored in the front end
@@ -51,10 +49,11 @@ public class AuthenticationService {
                         .maxAge(3600)
                         .build();
             }
-
         }
+
         return null;
     }
+
 
     public ResponseCookie createUser(CreatAccountRequest request) {
         String username = request.username();
@@ -62,13 +61,16 @@ public class AuthenticationService {
         String password = request.password();
         String role = "USER";
 
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String hashedPassword = passwordEncoder.encode(password);
+        // hash the password using jBCrypt
+        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
+        // save the user to the database
         authenticationRepository.createUser(new User(email, username, hashedPassword, role));
+
+        // generate JWT
         String jws = jwtTokenGenerator.getJwt(username);
 
-        // return a response cookie to be stored in the front end
+        // return a response cookie to be stored in the frontend
         return ResponseCookie.from("jwt", jws)
                 .httpOnly(true)
                 .path("/")
