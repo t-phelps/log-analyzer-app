@@ -2,7 +2,7 @@ package com.loganalyzer.backend.service;
 
 import com.loganalyzer.backend.dto.CreatAccountRequest;
 import com.loganalyzer.backend.dto.LoginRequest;
-import com.loganalyzer.backend.dto.User;
+import test.generated.tables.pojos.Users;
 import com.loganalyzer.backend.jwt.JwtTokenGenerator;
 import com.loganalyzer.backend.repository.AuthenticationRepository;
 import org.mindrot.jbcrypt.BCrypt;
@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -33,10 +34,10 @@ public class AuthenticationService {
         String password = loginRequest.password();
 
         // get the user stored in the db
-        Optional<User> user = authenticationRepository.getUser(username);
+        Users user = authenticationRepository.getUser(username);
 
-        if (user.isPresent()) {
-            String storedHashedPassword = user.get().getPassword();
+        if (user != null) {
+            String storedHashedPassword = user.getPassword();
 
             // verify the raw password against the stored hash
             if (BCrypt.checkpw(password, storedHashedPassword)) {
@@ -65,7 +66,7 @@ public class AuthenticationService {
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
         // save the user to the database
-        authenticationRepository.createUser(new User(email, username, hashedPassword, role));
+        authenticationRepository.createUser(new Users(null, email, username, hashedPassword, role, LocalDateTime.now()));
 
         // generate JWT
         String jws = jwtTokenGenerator.getJwt(username);

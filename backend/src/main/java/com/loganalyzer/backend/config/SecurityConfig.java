@@ -39,6 +39,7 @@ public class SecurityConfig {
                             requests
                                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                     .requestMatchers("/auth/login", "/auth/create").permitAll()
+                                    .requestMatchers("/upload/file").authenticated()
                                     .anyRequest().authenticated()
                     )
                     .httpBasic(AbstractHttpConfigurer::disable)

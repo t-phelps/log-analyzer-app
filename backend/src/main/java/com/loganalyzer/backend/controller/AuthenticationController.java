@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin("http://localhost:3000")
 public class AuthenticationController {
 
     AuthenticationService authenticationService;
