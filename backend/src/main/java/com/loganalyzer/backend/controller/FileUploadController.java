@@ -3,7 +3,11 @@ package com.loganalyzer.backend.controller;
 
 import com.loganalyzer.backend.service.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.endpoint.SecurityContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.loganalyzer.backend.jwt.JwtTokenGenerator;
@@ -13,32 +17,37 @@ import com.loganalyzer.backend.jwt.JwtTokenGenerator;
 public class FileUploadController {
 
     private FileUploadService fileUploadService;
-    private JwtTokenGenerator jwtTokenGenerator;
 
     @Autowired
-    public FileUploadController(FileUploadService fileUploadService, JwtTokenGenerator jwtTokenGenerator) {
+    public FileUploadController(FileUploadService fileUploadService) {
         this.fileUploadService = fileUploadService;
-        this.jwtTokenGenerator = jwtTokenGenerator;
     }
 
     /**
      * Receives a csv file uploaded to the server
      * TODO want to set this up to multi-thread read by my implemented producer consumer reader previously
      * @param file - the CSV file to be parsed
-     * @param jwt - the JWT for validation
      * @return
      */
     @PostMapping("/file")
     public ResponseEntity<?> uploadCsvFile(
-            @RequestParam("file") MultipartFile file,
-            @CookieValue(name = "jwt", required = true) String jwt ) {
-//        if(file.isEmpty()){
-//            return ResponseEntity.badRequest().build();
-//        }
+            @RequestParam("file") MultipartFile file) {
+        if(file.isEmpty()){
+            return ResponseEntity.badRequest().build();
+        }
 
-        jwtTokenGenerator.validateJwt(jwt);
+        // get the authentication object from local storage ( the security context holder)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        return ResponseEntity.ok().body("Successful upload");
+        if(authentication != null && authentication.isAuthenticated()) {
+
+            fileUploadService.parseFile(file);
+
+            return ResponseEntity.ok().body("Successful upload");
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
     }
 
 }

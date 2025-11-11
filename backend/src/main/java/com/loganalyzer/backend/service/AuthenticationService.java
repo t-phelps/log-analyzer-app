@@ -1,7 +1,12 @@
 package com.loganalyzer.backend.service;
 
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+
+
 import com.loganalyzer.backend.dto.CreatAccountRequest;
 import com.loganalyzer.backend.dto.LoginRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import test.generated.tables.pojos.Users;
 import com.loganalyzer.backend.jwt.JwtTokenGenerator;
 import com.loganalyzer.backend.repository.AuthenticationRepository;
@@ -11,51 +16,55 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class AuthenticationService {
 
     private final AuthenticationRepository authenticationRepository;
     private final JwtTokenGenerator jwtTokenGenerator;
+    private final PasswordEncoder passwordEncoder;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
-    public AuthenticationService(AuthenticationRepository authenticationRepository, JwtTokenGenerator jwtTokenGenerator) {
+    public AuthenticationService(AuthenticationRepository authenticationRepository, JwtTokenGenerator jwtTokenGenerator,
+    PasswordEncoder passwordEncoder,  UserDetailsService userDetailsService) {
         this.authenticationRepository = authenticationRepository;
         this.jwtTokenGenerator = jwtTokenGenerator;
+        this.passwordEncoder = passwordEncoder;
+        this.userDetailsService = userDetailsService;
     }
 
     /**
-     * Authenticate a user against the DB
-     * @param loginRequest - the credentials provided in the login request
+     * Authenticate user against the db
+     * @param principal - the username
+     * @return - a response cookie for user, else null
      */
-    public ResponseCookie authenticateUser(LoginRequest loginRequest) {
-        String username = loginRequest.username();
-        String password = loginRequest.password();
+    public ResponseCookie authenticateUser(Object principal) {
+        String username = principal.toString();
 
-        // get the user stored in the db
-        Users user = authenticationRepository.getUser(username);
-
+        UserDetails user = userDetailsService.loadUserByUsername(username);
         if (user != null) {
-            String storedHashedPassword = user.getPassword();
+            String jws = jwtTokenGenerator.getJwt(username);
 
-            // verify the raw password against the stored hash
-            if (BCrypt.checkpw(password, storedHashedPassword)) {
-                String jws = jwtTokenGenerator.getJwt(username);
-
-                // return a response cookie to be stored in the front end
-                return ResponseCookie.from("jwt", jws)
-                        .httpOnly(true)
-                        .path("/")
-                        .maxAge(3600)
-                        .build();
-            }
+            // return a response cookie to be stored in the front end
+            return ResponseCookie.from("jwt", jws)
+                    .httpOnly(true)
+                    .path("/")
+                    .maxAge(3600)
+                    .build();
         }
 
         return null;
     }
 
 
+    /**
+     * TODO most of this could be moved to userDetailsService
+     *
+     * Create a user in the database
+     * @param request - a {@link CreatAccountRequest} with user details
+     * @return a response cookie for user
+     */
     public ResponseCookie createUser(CreatAccountRequest request) {
         String username = request.username();
         String email  = request.email();
@@ -63,10 +72,15 @@ public class AuthenticationService {
         String role = "USER";
 
         // hash the password using jBCrypt
-        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
+        String hashedPassword = passwordEncoder.encode(password);
 
-        // save the user to the database
-        authenticationRepository.createUser(new Users(null, email, username, hashedPassword, role, LocalDateTime.now()));
+        try {
+            // save the user to the database
+            authenticationRepository.createUser(new Users(null, email, username, hashedPassword, role, LocalDateTime.now()));
+        }catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
 
         // generate JWT
         String jws = jwtTokenGenerator.getJwt(username);

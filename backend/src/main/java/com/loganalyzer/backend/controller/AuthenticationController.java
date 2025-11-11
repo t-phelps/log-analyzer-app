@@ -1,23 +1,35 @@
 package com.loganalyzer.backend.controller;
 
+import com.loganalyzer.backend.config.UsernamePwdAuthenticationProvider;
 import com.loganalyzer.backend.dto.CreatAccountRequest;
 import com.loganalyzer.backend.dto.LoginRequest;
+import com.loganalyzer.backend.jwt.JwtTokenGenerator;
 import com.loganalyzer.backend.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthenticationController {
 
-    AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
+    private final UsernamePwdAuthenticationProvider usernamePwdAuthenticationProvider;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenGenerator jwtTokenGenerator;
+
 
     @Autowired
-    public AuthenticationController(AuthenticationService authenticationService) {
+    public AuthenticationController(AuthenticationService authenticationService, UsernamePwdAuthenticationProvider usernamePwdAuthenticationProvider, AuthenticationManager authenticationManager, JwtTokenGenerator jwtTokenGenerator) {
         this.authenticationService = authenticationService;
+        this.usernamePwdAuthenticationProvider = usernamePwdAuthenticationProvider;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenGenerator = jwtTokenGenerator;
     }
 
     /**
@@ -32,7 +44,10 @@ public class AuthenticationController {
         }
 
         try{
-            ResponseCookie cookie = authenticationService.authenticateUser(loginRequest);
+            Authentication  authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password())
+            );
+            ResponseCookie cookie = authenticationService.authenticateUser(authentication.getPrincipal());
             return  ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body("User login successful");
         }catch(Exception e){
             return ResponseEntity.badRequest().build();
