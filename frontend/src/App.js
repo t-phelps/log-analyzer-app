@@ -22,10 +22,7 @@ function App() {
           path="/create-account"
           element={<CreateAccountForm setIsLoggedIn={setIsLoggedIn} />}
         />
-        <Route
-          path="/landing"
-          element={isLoggedIn ? <LandingPage /> : <Navigate to="/" />}
-        />
+        <Route path="/landing" element={<LandingPage />} />
         {/* 
         <Route path="/" element={<LoginForm />} />
         <Route path="/create-account" element={<CreateAccountForm />} />

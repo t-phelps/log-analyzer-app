@@ -33,11 +33,12 @@ export const LoginForm = () => {
     try {
       // await pauses execution of function until promise resolves (fetch returns a promise)
       // a promise gives us a result later (the response)
-      const response = await fetch("http://localhost:8080/api/login", {
+      const response = await fetch("http://localhost:8080/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(data),
       });
 
@@ -45,9 +46,9 @@ export const LoginForm = () => {
         throw new Error("Login failure");
       }
 
-      const result = await response.json();
+      const result = await response.text();
       console.log("Login successful", result);
-      navigate("/landing-page");
+      navigate("/landing");
     } catch (error) {
       console.log(error);
     }

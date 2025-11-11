@@ -2,16 +2,42 @@ import { Link } from "react-router-dom";
 import "../LandingStyle.css";
 import { NavBar } from "./NavBar";
 import "../NavBar.css";
-
-const handleFile = () => {
-  console.log("file placeholder");
-};
-
-const handleUpload = () => {
-  console.log("handle upload to api placeholder");
-};
+import { useState } from "react";
 
 export const LandingPage = () => {
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const handleFile = (event) => {
+    console.log("Files selected:", event.target.files);
+    setSelectedFile(event.target.files[0]);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      return alert("Please select a file first");
+    } else {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const response = await fetch("http://localhost:8080/upload/file", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Upload Failed: ", response);
+        }
+
+        const data = await response.text();
+        console.log(data);
+      } catch (err) {
+        console.log("Error uploading file to back-end");
+      }
+    }
+  };
+
   return (
     <div className="landing-body">
       <div>
@@ -49,10 +75,18 @@ export const LandingPage = () => {
         <div>
           <p>Please Submit your CSV File below</p>
         </div>
-        <input type="file" onChange={handleFile}></input>
-        <button className="btn" onClick={handleUpload}>
-          Upload
-        </button>
+        <form
+          className="uploadForm"
+          onSubmit={(e) => {
+            e.preventDefault(); // prevent page reload
+            handleUpload(); // call your async upload
+          }}
+        >
+          <input type="file" id="fileInput" name="file" onChange={handleFile} />
+          <button className="btn" type="submit">
+            Upload
+          </button>
+        </form>
       </div>
     </div>
   );

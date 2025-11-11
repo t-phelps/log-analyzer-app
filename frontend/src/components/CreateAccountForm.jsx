@@ -35,21 +35,22 @@ export const CreateAccountForm = ({ setIsLoggedIn }) => {
     try {
       // await pauses execution of function until promise resolves (fetch returns a promise)
       // a promise gives us a result later (the response)
-      const response = await fetch("http://localhost:8080/api/create-account", {
+      const response = await fetch("http://localhost:8080/auth/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(data),
       });
       if (!response.ok) {
         throw new Error("Invalid Credentials");
       }
 
-      const result = await response.json();
+      const result = await response.text();
       console.log("Login Successful", result);
       setIsLoggedIn(true);
-      navigate("/landing-page");
+      navigate("/landing");
     } catch (error) {
       console.log(error);
     }
