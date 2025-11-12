@@ -1,6 +1,7 @@
 package com.loganalyzer.backend.service;
 
 import com.loganalyzer.backend.repository.FileUploadRepository;
+import com.loganalyzer.backend.file.writer.SynchronizedFileWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -8,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -17,7 +19,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class FileUploadService {
 
     private static final int NUMBER_OF_PRODUCERS = 4;
-    private static final int NUMBER_OF_CONSUMERS = 4;
+    private static final int NUMBER_OF_CONSUMERS = 2;
+    // blocking queue has internal lock that manages access, so each thread access acquires the lock
     private static BlockingQueue<String> queue = new LinkedBlockingQueue<>();
 
     private FileUploadRepository fileUploadRepository;
@@ -34,11 +37,14 @@ public class FileUploadService {
      */
     public void parseFile(MultipartFile file) {
 
-        transferFileToMemory(file);
+        multiThreadedParse(file);
     }
 
-    private void transferFileToMemory(MultipartFile file) {
+    private void multiThreadedParse(MultipartFile file) {
         try{
+            /**
+             * TODO transfer this block to another function
+             */
             String fileName = file.getOriginalFilename();
             if(fileName == null){
                 throw new FileNotFoundException("File Name null");
@@ -48,41 +54,31 @@ public class FileUploadService {
             File tempFile = new File(tempDir,fileName);
             file.transferTo(tempFile);
 
+            /** ************************************************* */
+
             List<String> lines = Files.readAllLines(tempFile.toPath());
             int fileSize = lines.size();
             int linesPerProducer = fileSize / NUMBER_OF_PRODUCERS;
 
-            List<Thread> producers = new ArrayList();
+            List<Thread> producers = new ArrayList<>();
+
             for(int i = 0; i < NUMBER_OF_PRODUCERS; i++) {
                 int start = i * linesPerProducer;
-                int end = (i == NUMBER_OF_PRODUCERS - 1) ? fileSize : start + linesPerProducer;
+                int end = (i == NUMBER_OF_PRODUCERS - 1) ? fileSize : start + linesPerProducer; // handles extra lines (remainders)
                 List<String> subList = lines.subList(start, end);
-                Thread producer = new Thread(() -> {
-                    for(int j = 0; j < subList.size(); j++) {
-                        queue.add(subList.get(j));
-                    }
 
-                });
-                producer.start();
+                Thread producer = getProducer(i, subList);
                 producers.add(producer);
             }
 
-            List<Thread> consumers = new ArrayList();
+            List<Thread> consumers = new ArrayList<>();
+            // create the file the consumers will be writing to
+            Path writeFile = Files.createTempFile("writeFile", ".csv");
+            SynchronizedFileWriter synchronizedFileWriter = new SynchronizedFileWriter(writeFile.toAbsolutePath().toString());
+
             for(int i = 0; i < NUMBER_OF_CONSUMERS; i++){
 
-                Thread consumer = new Thread(() -> {
-                    try {
-                        String line = queue.take();
-                        if(line.isEmpty()){
-                            return;
-                        }
-                        System.out.println("Thread: " + Thread.currentThread().getName() + ": " + line);
-                    }catch (InterruptedException e){
-                        throw new RuntimeException(e);
-                    }
-                }, "Consumer: " + (i + 1));
-
-                consumer.start();
+                Thread consumer = getConsumer(i, synchronizedFileWriter);
                 consumers.add(consumer);
             }
 
@@ -90,17 +86,54 @@ public class FileUploadService {
                 producer.join();
             }
 
+            // safely kill out consumer threads once read after producers are joined
+            for (int i = 0; i < NUMBER_OF_CONSUMERS; i++) {
+                queue.put("POISON");
+            }
+
             for(Thread consumer : consumers) {
                 consumer.join();
             }
 
+            synchronizedFileWriter.close();
 
-
-
-        }catch (IOException e){
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
+        }catch (IOException | InterruptedException e){
             throw new RuntimeException(e);
         }
+    }
+
+    private static Thread getProducer(int i, List<String> subList) {
+        Thread producer = new Thread(() -> {
+            try {
+                for (String line : subList) {
+                    queue.put(line);  // put each line individually , .addAll not working
+                }
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }, "Producer-" + (i + 1));
+        producer.start();
+        return producer;
+    }
+
+    private static Thread getConsumer(int i, SynchronizedFileWriter  synchronizedFileWriter) {
+        Thread consumer = new Thread(() -> {
+            try {
+                while(true) {
+                    String line = queue.take();
+
+                    if("POISON".equals(line)) {
+                        break;
+                    }
+
+                    synchronizedFileWriter.writeLine(Thread.currentThread().getName() + line);
+                }
+            }catch (InterruptedException | IOException e){
+                throw new RuntimeException(e);
+            }
+        }, "Consumer: " + (i + 1));
+
+        consumer.start();
+        return consumer;
     }
 }

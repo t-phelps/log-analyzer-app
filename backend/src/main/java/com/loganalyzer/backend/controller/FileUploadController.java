@@ -2,21 +2,20 @@ package com.loganalyzer.backend.controller;
 
 
 import com.loganalyzer.backend.service.FileUploadService;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.endpoint.SecurityContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.loganalyzer.backend.jwt.JwtTokenGenerator;
 
 @RestController
 @RequestMapping("/upload")
 public class FileUploadController {
 
-    private FileUploadService fileUploadService;
+    private final FileUploadService fileUploadService;
 
     @Autowired
     public FileUploadController(FileUploadService fileUploadService) {
