@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,7 +25,7 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private JwtAuthEntryPoint jwtAuthEntryPoint;
+    private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
     @Autowired
     public SecurityConfig(JwtAuthEntryPoint jwtAuthEntryPoint) {
@@ -32,8 +33,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(UsernamePwdAuthenticationProvider provider) {
+        return new ProviderManager(provider);
     }
 
     /**
@@ -43,13 +44,13 @@ public class SecurityConfig {
      * @throws Exception - on error
      */
     @Bean
-    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, UsernamePwdAuthenticationProvider usernamePwdAuthenticationProvider) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowCredentials(true);
-                    config.setAllowedOrigins(List.of("http://localhost:3000"));
+                    config.setAllowedOrigins(List.of("http://localhost:3000")); // cors config to allow front end communication
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     return config;
@@ -59,16 +60,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests ->
                         requests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers("/auth/login", "/auth/create").permitAll()
-                                .requestMatchers("/upload/file").authenticated()
+                                .requestMatchers("/auth/login", "/auth/create").permitAll() //
+                                .requestMatchers("/upload/file").authenticated() // protected endpoints
                                 .anyRequest().authenticated()
                 )
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable) // disable spring custom login
                 .sessionManagement(session -> // create stateless session requiring JWT auth
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.authenticationProvider(usernamePwdAuthenticationProvider); // use our own auth provider in the chaining
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class); // jwt filter before every request
         return http.build();
     }
 
@@ -81,6 +83,11 @@ public class SecurityConfig {
             return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Bean for jwt authentication functionalities
+     * @return our Jwt auth filter
+     * @throws Exception
+     */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
         return new JwtAuthenticationFilter();

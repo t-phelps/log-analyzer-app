@@ -1,7 +1,7 @@
 package com.loganalyzer.backend.controller;
 
 import com.loganalyzer.backend.config.UsernamePwdAuthenticationProvider;
-import com.loganalyzer.backend.dto.CreatAccountRequest;
+import com.loganalyzer.backend.dto.CreateAccountRequest;
 import com.loganalyzer.backend.dto.LoginRequest;
 import com.loganalyzer.backend.jwt.JwtTokenGenerator;
 import com.loganalyzer.backend.service.AuthenticationService;
@@ -19,17 +19,13 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
-    private final UsernamePwdAuthenticationProvider usernamePwdAuthenticationProvider;
     private final AuthenticationManager authenticationManager;
-    private final JwtTokenGenerator jwtTokenGenerator;
 
 
     @Autowired
     public AuthenticationController(AuthenticationService authenticationService, UsernamePwdAuthenticationProvider usernamePwdAuthenticationProvider, AuthenticationManager authenticationManager, JwtTokenGenerator jwtTokenGenerator) {
         this.authenticationService = authenticationService;
-        this.usernamePwdAuthenticationProvider = usernamePwdAuthenticationProvider;
         this.authenticationManager = authenticationManager;
-        this.jwtTokenGenerator = jwtTokenGenerator;
     }
 
     /**
@@ -45,9 +41,9 @@ public class AuthenticationController {
 
         try{
             Authentication  authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password())
-            );
-            ResponseCookie cookie = authenticationService.authenticateUser(authentication.getPrincipal());
+                    new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
+
+            ResponseCookie cookie = authenticationService.generateUserCookie(authentication.getPrincipal());
             return  ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body("User login successful");
         }catch(Exception e){
             return ResponseEntity.badRequest().build();
@@ -56,7 +52,7 @@ public class AuthenticationController {
 
 
     @PostMapping("/create")
-    public ResponseEntity<?> createAccount(@RequestBody CreatAccountRequest request){
+    public ResponseEntity<?> createAccount(@RequestBody CreateAccountRequest request){
         if(request.email().isEmpty() || request.username().isEmpty() || request.password().isEmpty()) {
             return ResponseEntity.badRequest().body("Failed To Create Account: A field within the request is empty");
         }

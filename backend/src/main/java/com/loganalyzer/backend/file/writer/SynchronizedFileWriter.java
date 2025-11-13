@@ -22,7 +22,7 @@ public class SynchronizedFileWriter {
     /**
      * Synchronized writing of liens to a file
      * @param line - line to write
-     * @throws IOException
+     * @throws IOException - on write or newLine error
      */
     public synchronized void writeLine(String line) throws IOException {
         fileWriter.write(line);
