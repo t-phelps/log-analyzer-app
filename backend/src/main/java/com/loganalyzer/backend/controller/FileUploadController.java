@@ -3,13 +3,22 @@ package com.loganalyzer.backend.controller;
 
 import com.loganalyzer.backend.service.FileUploadService;
 
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 @RestController
 @RequestMapping("/upload")
@@ -40,9 +49,23 @@ public class FileUploadController {
 
         if(authentication != null && authentication.isAuthenticated()) {
 
-            fileUploadService.parseFile(file);
+            File parsedFile = fileUploadService.parseFile(file);
 
-            return ResponseEntity.ok().body("Successful upload");
+            Resource resource = new FileSystemResource(parsedFile);
+
+            ResponseEntity<Resource> response = ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parsedFile.getName() + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(parsedFile.length())
+                    .body(resource);
+
+            try {
+                Files.deleteIfExists(parsedFile.toPath());
+            }catch(IOException e){
+                return ResponseEntity.internalServerError().build();
+            }
+
+            return response;
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

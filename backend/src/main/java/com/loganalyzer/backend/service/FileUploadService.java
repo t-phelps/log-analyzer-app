@@ -35,12 +35,12 @@ public class FileUploadService {
      * @param file - the file to parse
      * @return
      */
-    public void parseFile(MultipartFile file) {
+    public File parseFile(MultipartFile file) {
 
-        multiThreadedParse(file);
+        return multiThreadedParse(file);
     }
 
-    private void multiThreadedParse(MultipartFile file) {
+    private File multiThreadedParse(MultipartFile file) {
         try{
             /**
              * TODO transfer this block to another function
@@ -73,8 +73,8 @@ public class FileUploadService {
 
             List<Thread> consumers = new ArrayList<>();
             // create the file the consumers will be writing to
-            Path writeFile = Files.createTempFile("writeFile", ".csv");
-            SynchronizedFileWriter synchronizedFileWriter = new SynchronizedFileWriter(writeFile.toAbsolutePath().toString());
+            File writeFile = File.createTempFile("writeFile", ".csv");
+            SynchronizedFileWriter synchronizedFileWriter = new SynchronizedFileWriter(writeFile.getAbsolutePath());
 
             for(int i = 0; i < NUMBER_OF_CONSUMERS; i++){
 
@@ -95,10 +95,15 @@ public class FileUploadService {
                 consumer.join();
             }
 
+            if(!tempFile.delete()){
+                throw new IOException("Could not delete temp file");
+            }
+
             synchronizedFileWriter.close();
+            return writeFile;
 
         }catch (IOException | InterruptedException e){
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
