@@ -39,8 +39,8 @@ public class FileUploadController {
      */
     @PostMapping("/file")
     public ResponseEntity<?> uploadCsvFile(
-            @RequestParam("file") MultipartFile file) {
-        if(file.isEmpty()){
+            @RequestParam("file") MultipartFile file, @RequestParam("input") String input) {
+        if(file.isEmpty() || input.isEmpty()){
             return ResponseEntity.badRequest().build();
         }
 
@@ -49,23 +49,14 @@ public class FileUploadController {
 
         if(authentication != null && authentication.isAuthenticated()) {
 
-            File parsedFile = fileUploadService.parseFile(file);
+            File parsedFile = fileUploadService.parseFile(file, input.toUpperCase());
 
             Resource resource = new FileSystemResource(parsedFile);
 
-            ResponseEntity<Resource> response = ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parsedFile.getName() + "\"")
+            return  ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parsedFile.getName()  + System.currentTimeMillis() + "\"")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .contentLength(parsedFile.length())
                     .body(resource);
-
-            try {
-                Files.deleteIfExists(parsedFile.toPath());
-            }catch(IOException e){
-                return ResponseEntity.internalServerError().build();
-            }
-
-            return response;
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

@@ -6,6 +6,11 @@ import { useState } from "react";
 
 export const LandingPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [inputValue, setInputValue] = useState("");
+
+  const handleInput = (event) => {
+    setInputValue(event.target.value);
+  };
 
   const handleFile = (event) => {
     console.log("Files selected:", event.target.files);
@@ -18,6 +23,7 @@ export const LandingPage = () => {
     } else {
       const formData = new FormData();
       formData.append("file", selectedFile);
+      formData.append("input", inputValue);
 
       try {
         const response = await fetch("http://localhost:8080/upload/file", {
@@ -30,8 +36,31 @@ export const LandingPage = () => {
           throw new Error("Upload Failed: ", response);
         }
 
-        const data = await response.text();
-        console.log(data);
+        const blob = await response.blob();
+
+        //temp url for blob
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+
+        // Optional: use the filename from the response headers if provided
+        const disposition = response.headers.get("Content-Disposition");
+        let fileName = "downloaded_file";
+        if (disposition && disposition.includes("filename=")) {
+          fileName = disposition
+            .split("filename=")[1]
+            .replace(/['"]/g, "")
+            .trim();
+        }
+        a.download = fileName;
+
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        a.remove();
+        window.URL.revokeObjectURL(url);
       } catch (err) {
         console.log("Error uploading file to back-end");
       }
@@ -61,15 +90,11 @@ export const LandingPage = () => {
         <div className="parameters">
           <div className="box1">
             <p>Log-Level</p>
-            <input type="text" placeholder="Property 1..." />
-          </div>
-          <div className="box2">
-            <p>Message</p>
-            <input type="text" placeholder="Property 2..." />
-          </div>
-          <div className="box3">
-            <p>Date</p>
-            <input type="text" placeholder="Property 3..." />
+            <input
+              type="text"
+              placeholder="Property 1..."
+              onChange={handleInput}
+            />
           </div>
         </div>
         <div>
@@ -79,7 +104,7 @@ export const LandingPage = () => {
           className="uploadForm"
           onSubmit={(e) => {
             e.preventDefault(); // prevent page reload
-            handleUpload(); // call your async upload
+            handleUpload();
           }}
         >
           <input type="file" id="fileInput" name="file" onChange={handleFile} />

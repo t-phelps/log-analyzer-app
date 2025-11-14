@@ -35,12 +35,12 @@ public class FileUploadService {
      * @param file - the file to parse
      * @return
      */
-    public File parseFile(MultipartFile file) {
+    public File parseFile(MultipartFile file, String input) {
 
-        return multiThreadedParse(file);
+        return multiThreadedParse(file, input);
     }
 
-    private File multiThreadedParse(MultipartFile file) {
+    private File multiThreadedParse(MultipartFile file, String input) {
         try{
             /**
              * TODO transfer this block to another function
@@ -67,7 +67,7 @@ public class FileUploadService {
                 int end = (i == NUMBER_OF_PRODUCERS - 1) ? fileSize : start + linesPerProducer; // handles extra lines (remainders)
                 List<String> subList = lines.subList(start, end);
 
-                Thread producer = getProducer(i, subList);
+                Thread producer = getProducer(i, subList, input);
                 producers.add(producer);
             }
 
@@ -107,11 +107,14 @@ public class FileUploadService {
         }
     }
 
-    private static Thread getProducer(int i, List<String> subList) {
+    private static Thread getProducer(int i, List<String> subList, String input) {
         Thread producer = new Thread(() -> {
             try {
                 for (String line : subList) {
-                    queue.put(line);  // put each line individually , .addAll not working
+                    if(line.contains(input)){
+                        queue.put(line);  // put each line individually , .addAll not working
+                    }
+
                 }
             }catch (InterruptedException e){
                 e.printStackTrace();
