@@ -10,6 +10,7 @@ import { CreateAccountForm } from "./components/CreateAccountForm";
 import { LandingPage } from "./components/LandingPage";
 import { useState } from "react";
 import { NavBar } from "./components/NavBar";
+import { AccountPage } from "./components/AccountPage";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -23,6 +24,7 @@ function App() {
           element={<CreateAccountForm setIsLoggedIn={setIsLoggedIn} />}
         />
         <Route path="/landing" element={<LandingPage />} />
+        <Route path="/account" element={<AccountPage />} />
         {/* 
         <Route path="/" element={<LoginForm />} />
         <Route path="/create-account" element={<CreateAccountForm />} />

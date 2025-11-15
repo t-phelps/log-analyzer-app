@@ -61,7 +61,7 @@ public class SecurityConfig {
                         requests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers("/auth/login", "/auth/create").permitAll() //
-                                .requestMatchers("/upload/file").authenticated() // protected endpoints
+                                .requestMatchers("/upload/file", "/account/change-password").authenticated() // protected endpoints
                                 .anyRequest().authenticated()
                 )
                 .httpBasic(AbstractHttpConfigurer::disable)

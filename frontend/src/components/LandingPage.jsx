@@ -9,6 +9,18 @@ export const LandingPage = () => {
   const [inputValue, setInputValue] = useState("");
 
   const handleInput = (event) => {
+    const input = event.target.value.toLowerCase();
+    // could put this in a set and if it adds to set then its invalid
+    if (
+      input !== "error" ||
+      input !== "warn" ||
+      input !== "info" ||
+      input !== "debug" ||
+      input !== "fatal" ||
+      input !== "trace"
+    ) {
+      return alert("Not a valid Log Level");
+    }
     setInputValue(event.target.value);
   };
 
@@ -44,7 +56,6 @@ export const LandingPage = () => {
         const a = document.createElement("a");
         a.href = url;
 
-        // Optional: use the filename from the response headers if provided
         const disposition = response.headers.get("Content-Disposition");
         let fileName = "downloaded_file";
         if (disposition && disposition.includes("filename=")) {
