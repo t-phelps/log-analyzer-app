@@ -70,7 +70,7 @@ export const LoginForm = () => {
             <p className="error-msg">{errors.username?.message}</p>
 
             <input
-              type="text"
+              type="password"
               placeholder="Password..."
               {...register("password")}
             ></input>

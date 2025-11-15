@@ -4,10 +4,7 @@ import com.loganalyzer.backend.config.UserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,13 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/account")
 public class AccountController {
 
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
     public AccountController(UserDetailsService userDetailsService) {
@@ -47,6 +42,31 @@ public class AccountController {
 
                 return ResponseEntity.ok("Password Changed Successfully");
 
+            }catch(IllegalArgumentException e){
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    /**
+     * Delete an account using the users password entered on the front end
+     * @param password - password to match
+     * @return - <code>200 on success</code>, <code>401 if not authenticated</code>, <code>400 if bad request</code>
+     */
+    @PostMapping("delete")
+    public ResponseEntity<?> delete(@RequestParam("password") String password) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if(authentication != null && authentication.isAuthenticated()){
+            try{
+                userDetailsService.deleteAccount(
+                        (UserDetails) authentication.getPrincipal(),
+                        password
+                );
+
+                return ResponseEntity.ok().build();
             }catch(IllegalArgumentException e){
                 return ResponseEntity.badRequest().build();
             }

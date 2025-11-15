@@ -4,9 +4,33 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { NavBar } from "./NavBar";
 import "../AccountPage.css";
+import { useState } from "react";
 
 export const AccountPage = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
+  const [enteredPassword, setEnteredPassword] = useState("");
+
+  const handleAccountDeletion = async () => {
+    const userPassword = window.prompt("Please enter your password");
+    if (userPassword !== null) {
+      setEnteredPassword(userPassword);
+      const formData = new FormData();
+      formData.append("password", enteredPassword);
+      try {
+        const response = await fetch("http://localhost:8080/account/delete", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error("Error deleting account: ", response);
+        console.log("User successfully deleted");
+        navigate("/");
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
 
   const schema = yup.object().shape({
     oldPassword: yup.string().required("Old password is required"),
@@ -97,6 +121,15 @@ export const AccountPage = ({ setIsLoggedIn }) => {
 
             <input className="btn" type="submit" />
           </form>
+
+          <div>
+            <p className="account-delete">
+              Delete Account? Note: This is not reversible
+            </p>
+            <button className="delete-btn" onClick={handleAccountDeletion}>
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -37,3 +37,17 @@ input {
   border-radius: 8px;
   border-width: 1px;
 }
+
+.account-delete {
+  color: red;
+  font-weight: bold;
+}
+
+.delete-btn {
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.delete-btn:hover {
+  background-color: red;
+}

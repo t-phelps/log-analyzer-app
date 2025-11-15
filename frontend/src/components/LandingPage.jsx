@@ -10,15 +10,10 @@ export const LandingPage = () => {
 
   const handleInput = (event) => {
     const input = event.target.value.toLowerCase();
-    // could put this in a set and if it adds to set then its invalid
-    if (
-      input !== "error" ||
-      input !== "warn" ||
-      input !== "info" ||
-      input !== "debug" ||
-      input !== "fatal" ||
-      input !== "trace"
-    ) {
+    const setValues = ["error", "warn", "debug", "info", "fatal", "trace"];
+    const set = new Set(setValues.map((level) => level.trim().toLowerCase()));
+
+    if (!set.has(input.trim().toLowerCase())) {
       return alert("Not a valid Log Level");
     }
     setInputValue(event.target.value);
@@ -120,9 +115,31 @@ export const LandingPage = () => {
         >
           <input type="file" id="fileInput" name="file" onChange={handleFile} />
           <button className="btn" type="submit">
-            Upload
+            Parse File!
           </button>
         </form>
+
+        <div className="upload-section">
+          <h2>Upload to the cloud!</h2>
+
+          <form
+            className="uploadForm"
+            onSubmit={(e) => {
+              e.preventDefault();
+              // handle file upload to cloud
+            }}
+          >
+            <input
+              type="file"
+              id="fileInput"
+              name="file"
+              onChange={handleFile}
+            />
+            <button className="btn" type="submit">
+              Upload to Drive!
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

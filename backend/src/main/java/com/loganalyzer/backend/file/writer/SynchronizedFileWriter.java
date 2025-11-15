@@ -29,10 +29,15 @@ public class SynchronizedFileWriter {
         fileWriter.newLine();
     }
 
+    // TODO do I even need this if i call close it automatically flushes the stream
     public synchronized void flush() throws IOException {
         fileWriter.flush();
     }
 
+    /**
+     * Closes stream and flushes it
+     * @throws IOException
+     */
     public void close() throws IOException {
         fileWriter.close();
     }

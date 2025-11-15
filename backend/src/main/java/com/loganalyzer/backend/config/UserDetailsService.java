@@ -55,19 +55,13 @@ public class UserDetailsService implements org.springframework.security.core.use
 
     /**
      * Service method for changing a users password
-     * @param principal - the UserDetails principal object to get the useranme
+     * @param principal - the UserDetails principal object to get the username
      * @param oldPassword - users old password
      * @param newPassword - users new password
      */
     public void changePassword(UserDetails principal, String oldPassword, String newPassword) {
-        String username = principal.getUsername();
 
-        // hitting this again feels redundant but spring deletes user credentials after authentication, so I don't see another way to access their old password from the db here
-        UserDetails userDetails = loadUserByUsername(username);
-
-        if(!passwordEncoder.matches(oldPassword, userDetails.getPassword())) {
-            throw new BadCredentialsException("Invalid old password");
-        }
+        String username = verifyPassword(principal, oldPassword);
 
         String encodedPassword =  passwordEncoder.encode(newPassword);
 
@@ -84,5 +78,36 @@ public class UserDetailsService implements org.springframework.security.core.use
 
         // reset the security context with the new authentication object
         SecurityContextHolder.getContext().setAuthentication(newAuthentication);
+    }
+
+    /**
+     * Service method for deleting an account
+     * @param principal - the UserDetails object
+     * @param password - the password to verify
+     */
+    public void deleteAccount(UserDetails principal, String password) {
+        String username = verifyPassword(principal, password);
+
+        accountRepository.deleteAccount(username);
+
+        // set user to unauthenticated
+        SecurityContextHolder.getContext().setAuthentication(null);
+    }
+
+    /**
+     * Verify a users password by principal and password against the db
+     * @param principal - user details object of principal
+     * @param password - password to check against db
+     * @return - the username
+     */
+    private String verifyPassword(UserDetails principal, String password) {
+        String username = principal.getUsername();
+
+        UserDetails userDetails = loadUserByUsername(username);
+        if(!passwordEncoder.matches(password, userDetails.getPassword())) {
+            throw new BadCredentialsException("Invalid old password");
+        }
+
+        return username;
     }
 }
