@@ -1,8 +1,11 @@
-package com.loganalyzer.backend.config;
+package com.loganalyzer.backend.service;
 
+import com.loganalyzer.backend.dto.CreateAccountRequest;
+import com.loganalyzer.backend.jwt.JwtTokenGenerator;
 import com.loganalyzer.backend.repository.AccountRepository;
 import com.loganalyzer.backend.repository.AuthenticationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,23 +18,28 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import test.generated.tables.pojos.Users;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
+public class CustomUserDetailsService implements UserDetailsService {
 
     private final AuthenticationRepository authenticationRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;
+    private final JwtTokenGenerator jwtTokenGenerator;
 
     @Autowired
-    public UserDetailsService(AuthenticationRepository authenticationRepository,
-                              PasswordEncoder passwordEncoder,
-                              AccountRepository accountRepository) {
+    public CustomUserDetailsService(AuthenticationRepository authenticationRepository,
+                                    PasswordEncoder passwordEncoder,
+                                    AccountRepository accountRepository,
+                                    JwtTokenGenerator jwtTokenGenerator) {
         this.authenticationRepository = authenticationRepository;
         this.passwordEncoder = passwordEncoder;
         this.accountRepository = accountRepository;
+        this.jwtTokenGenerator = jwtTokenGenerator;
     }
 
     /**
@@ -92,6 +100,50 @@ public class UserDetailsService implements org.springframework.security.core.use
 
         // set user to unauthenticated
         SecurityContextHolder.getContext().setAuthentication(null);
+    }
+
+    /**
+     * Authenticate user against the db
+     * @param principal - the username
+     * @return - a response cookie for user, else null
+     */
+    public ResponseCookie generateUserCookie(Object principal) {
+        String username = principal.toString();
+
+        String jws = jwtTokenGenerator.getJwt(username);
+
+        // return a response cookie to be stored in the front end
+        return ResponseCookie.from("jwt", jws)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(3600)
+                .build();
+    }
+
+
+    /**
+     * Create a user in the database
+     * @param request - a {@link CreateAccountRequest} with user details
+     * @return a response cookie for user
+     */
+    public ResponseCookie createUser(CreateAccountRequest request) {
+        String username = request.username();
+        String email  = request.email();
+        String password = request.password(); // is this unsafe to do this here? notice in Authentication object, Credentials: [Protected]
+        String role = "USER";
+
+        // hash the password using jBCrypt
+        String hashedPassword = passwordEncoder.encode(password);
+
+        try {
+            // save the user to the database
+            authenticationRepository.createUser(new Users(null, email, username, hashedPassword, role, LocalDateTime.now()));
+        }catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return generateUserCookie(username);
     }
 
     /**

@@ -1,10 +1,8 @@
 package com.loganalyzer.backend.controller;
 
-import com.loganalyzer.backend.config.UsernamePwdAuthenticationProvider;
 import com.loganalyzer.backend.dto.CreateAccountRequest;
 import com.loganalyzer.backend.dto.LoginRequest;
-import com.loganalyzer.backend.jwt.JwtTokenGenerator;
-import com.loganalyzer.backend.service.AuthenticationService;
+import com.loganalyzer.backend.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -18,14 +16,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthenticationController {
 
-    private final AuthenticationService authenticationService;
     private final AuthenticationManager authenticationManager;
+    private final CustomUserDetailsService customUserDetailsService;
 
 
     @Autowired
-    public AuthenticationController(AuthenticationService authenticationService, UsernamePwdAuthenticationProvider usernamePwdAuthenticationProvider, AuthenticationManager authenticationManager, JwtTokenGenerator jwtTokenGenerator) {
-        this.authenticationService = authenticationService;
+    public AuthenticationController(AuthenticationManager authenticationManager,
+                                    CustomUserDetailsService customUserDetailsService) {
         this.authenticationManager = authenticationManager;
+        this.customUserDetailsService = customUserDetailsService;
     }
 
     /**
@@ -43,7 +42,7 @@ public class AuthenticationController {
             Authentication  authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
 
-            ResponseCookie cookie = authenticationService.generateUserCookie(authentication.getPrincipal());
+            ResponseCookie cookie = customUserDetailsService.generateUserCookie(authentication.getPrincipal());
             return  ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body("User login successful");
         }catch(Exception e){
             return ResponseEntity.badRequest().build();
@@ -58,7 +57,7 @@ public class AuthenticationController {
         }
 
         try{
-            ResponseCookie cookie = authenticationService.createUser(request);
+            ResponseCookie cookie = customUserDetailsService.createUser(request);
             return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body("Account created successfully");
         }catch(Exception e){
             return ResponseEntity.badRequest().body("Failed To Create Account");

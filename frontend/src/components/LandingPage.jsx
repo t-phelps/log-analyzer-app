@@ -2,21 +2,30 @@ import { Link } from "react-router-dom";
 import "../LandingStyle.css";
 import { NavBar } from "./NavBar";
 import "../NavBar.css";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export const LandingPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [inputValue, setInputValue] = useState("");
 
-  const handleInput = (event) => {
-    const input = event.target.value.toLowerCase();
-    const setValues = ["error", "warn", "debug", "info", "fatal", "trace"];
-    const set = new Set(setValues.map((level) => level.trim().toLowerCase()));
+  const typingDelay = 500;
+  const typingTimer = useRef(null);
 
-    if (!set.has(input.trim().toLowerCase())) {
-      return alert("Not a valid Log Level");
-    }
-    setInputValue(event.target.value);
+  const handleInput = (event) => {
+    const value = event.target.value;
+    setInputValue(value);
+
+    clearTimeout(typingTimer.current);
+
+    typingTimer.current = setTimeout(() => {
+      const input = value.trim().toLowerCase();
+      const setValues = ["error", "warn", "debug", "info", "fatal", "trace"];
+      const set = new Set(setValues.map((level) => level.trim().toLowerCase()));
+
+      if (!set.has(input) && input.length > 0) {
+        alert("Not a valid Log Level");
+      }
+    }, typingDelay);
   };
 
   const handleFile = (event) => {
@@ -118,28 +127,6 @@ export const LandingPage = () => {
             Parse File!
           </button>
         </form>
-
-        <div className="upload-section">
-          <h2>Upload to the cloud!</h2>
-
-          <form
-            className="uploadForm"
-            onSubmit={(e) => {
-              e.preventDefault();
-              // handle file upload to cloud
-            }}
-          >
-            <input
-              type="file"
-              id="fileInput"
-              name="file"
-              onChange={handleFile}
-            />
-            <button className="btn" type="submit">
-              Upload to Drive!
-            </button>
-          </form>
-        </div>
       </div>
     </div>
   );

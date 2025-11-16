@@ -1,6 +1,6 @@
 package com.loganalyzer.backend.controller;
 
-import com.loganalyzer.backend.config.UserDetailsService;
+import com.loganalyzer.backend.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/account")
 public class AccountController {
 
-    private final UserDetailsService userDetailsService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Autowired
-    public AccountController(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    public AccountController(CustomUserDetailsService customUserDetailsService) {
+        this.customUserDetailsService = customUserDetailsService;
     }
 
     /**
@@ -35,7 +35,7 @@ public class AccountController {
 
         if(authentication != null && authentication.isAuthenticated()){
             try {
-                userDetailsService.changePassword(
+                customUserDetailsService.changePassword(
                         (UserDetails) authentication.getPrincipal(),
                         oldPassword,
                         newPassword);
@@ -61,7 +61,7 @@ public class AccountController {
 
         if(authentication != null && authentication.isAuthenticated()){
             try{
-                userDetailsService.deleteAccount(
+                customUserDetailsService.deleteAccount(
                         (UserDetails) authentication.getPrincipal(),
                         password
                 );

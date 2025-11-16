@@ -8,14 +8,12 @@ import { useState } from "react";
 
 export const AccountPage = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
-  const [enteredPassword, setEnteredPassword] = useState("");
 
   const handleAccountDeletion = async () => {
     const userPassword = window.prompt("Please enter your password");
     if (userPassword !== null) {
-      setEnteredPassword(userPassword);
       const formData = new FormData();
-      formData.append("password", enteredPassword);
+      formData.append("password", userPassword);
       try {
         const response = await fetch("http://localhost:8080/account/delete", {
           method: "POST",

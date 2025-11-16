@@ -3,7 +3,6 @@ package com.loganalyzer.backend.controller;
 
 import com.loganalyzer.backend.service.FileUploadService;
 
-import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -17,8 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
+
 
 @RestController
 @RequestMapping("/upload")
@@ -33,7 +31,6 @@ public class FileUploadController {
 
     /**
      * Receives a csv file uploaded to the server
-     * TODO want to set this up to multi-thread read by my implemented producer consumer reader previously
      * @param file - the CSV file to be parsed
      * @return
      */
